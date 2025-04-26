@@ -1,41 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { getCode } from '../api/axios';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../utils/types';
 
-const CodeVerificationScreen = ({ route, navigation }) => {
-  const [code, setCode] = useState('');
-  const [resendTime, setResendTime] = useState(60);
+
+// Props type for this screen
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'CodeVerification'
+>;
+
+const CodeVerificationScreen: React.FC<Props> = ({ route, navigation }) => {
+  const [code, setCode] = useState<string>('');
+  const [resendTime, setResendTime] = useState<number>(60);
   const { email } = route.params;
 
   useEffect(() => {
-    const timer = resendTime > 0 && setInterval(() => {
-      setResendTime(resendTime - 1);
-    }, 1000);
-    return () => clearInterval(timer);
+    let timer: ReturnType<typeof setInterval>;
+    if (resendTime > 0) {
+      timer = setInterval(() => {
+        setResendTime(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [resendTime]);
 
   const handleVerify = async () => {
     if (code.length === 6) {
       try {
-        await getCode(email, code); 
+        await getCode(email, code);
         navigation.navigate('CompleteRegistration', { email });
-      } catch (error) {
-        console.error("Verification failed:", error.message);
-        alert("Invalid or expired code. Please try again.");
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('Verification failed:', message);
+        Alert.alert('Invalid or expired code', message);
       }
     }
   };
-  
 
   const handleResendCode = () => {
     setResendTime(60);
-    // Resend code logic here
+    // TODO: call API to resend code
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Enter Verification Code</Text>
-      
+
       <View style={styles.stepsIndicator}>
         <View style={styles.step} />
         <View style={[styles.step, styles.activeStep]} />
@@ -49,7 +71,8 @@ const CodeVerificationScreen = ({ route, navigation }) => {
 
       <View style={styles.emailContainer}>
         <Text style={styles.emailText}>
-          A verification code has been sent to <Text style={styles.emailHighlight}>{email}</Text>
+          A verification code has been sent to{' '}
+          <Text style={styles.emailHighlight}>{email}</Text>
         </Text>
       </View>
 
@@ -63,16 +86,16 @@ const CodeVerificationScreen = ({ route, navigation }) => {
         maxLength={6}
       />
 
-      <TouchableOpacity 
-        style={[styles.primaryButton, code.length !== 6 && styles.disabledButton]} 
+      <TouchableOpacity
+        style={[styles.primaryButton, code.length !== 6 && styles.disabledButton]}
         onPress={handleVerify}
         disabled={code.length !== 6}
       >
-        <Text style={styles.buttonText}>Verify & Continue →</Text>
+        <Text style={styles.buttonText}>Verify &amp; Continue →</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={handleResendCode} 
+      <TouchableOpacity
+        onPress={handleResendCode}
         disabled={resendTime > 0}
         style={styles.resendButton}
       >
@@ -82,7 +105,9 @@ const CodeVerificationScreen = ({ route, navigation }) => {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.secondaryText}>Want to use a different email? Go back</Text>
+        <Text style={styles.secondaryText}>
+          Want to use a different email? Go back
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -93,7 +118,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#fff',
     padding: 30,
-    top: 50
+    paddingTop: 50,
   },
   title: {
     fontSize: 24,

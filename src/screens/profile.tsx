@@ -10,6 +10,7 @@ import {
 import { AuthContext } from '../utils/authContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
+
 const ProfileScreen = () => {
   const { signOut } = useContext(AuthContext);
 

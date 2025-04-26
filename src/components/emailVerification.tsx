@@ -1,40 +1,55 @@
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { useNavigation } from "@react-navigation/native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+} from 'react-native';
 import { emailVerify } from '../api/axios';
-import { Alert } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../utils/types';
 
-const EmailVerificationScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('');
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'EmailVerification'
+>;
 
-  const navigationRoute = useNavigation();
-  
+const EmailVerificationScreen: React.FC<Props> = ({ navigation }) => {
+  const [email, setEmail] = useState<string>('');
 
   const handleSendCode = async () => {
     if (!email) return;
-  
+
     try {
       await emailVerify(email);
       navigation.navigate('CodeVerification', { email });
-    } catch (err) {
-      // err.message now contains the backend’s `error` text
-      if (err.message.includes('already registered')) {
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error);
+      if (message.includes('already registered')) {
         Alert.alert(
           'Already Registered',
-          err.message,
-          [{ text: 'Go to Login', onPress: () => navigation.navigate('Login') }]
+          message,
+          [
+            {
+              text: 'Go to Login',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ]
         );
       } else {
-        Alert.alert('Error', err.message);
+        Alert.alert('Error', message);
       }
     }
   };
-  
-  
 
   const handleBackToLogIn = () => {
-    navigationRoute.navigate('Login');
+    navigation.navigate('Login');
   };
 
   return (
@@ -55,20 +70,14 @@ const EmailVerificationScreen = ({ navigation }) => {
             <Text style={styles.rateValue}>~20%</Text>
           </View>
         </View>
-        <Text style={styles.targetText}>Target 20% per annum with Prime Source</Text>
-      </View>
-
-      {/* <View style={styles.testimonial}>
-        <Text style={styles.testimonialText}>
-          "I added Prime Source to my savings and now earn more than my bank offers. 
-          My money is finally working harder!"
+        <Text style={styles.targetText}>
+          Target 20% per annum with Prime Source
         </Text>
-        <Text style={styles.testimonialAuthor}>- M*** S. ★★★★★</Text>
-      </View> */}
+      </View>
 
       <View style={styles.formContainer}>
         <Text style={styles.formTitle}>Verify Your Email</Text>
-        
+
         <View style={styles.stepsIndicator}>
           <View style={[styles.step, styles.activeStep]} />
           <View style={styles.step} />
@@ -90,8 +99,8 @@ const EmailVerificationScreen = ({ navigation }) => {
           autoCapitalize="none"
         />
 
-        <TouchableOpacity 
-          style={[styles.primaryButton, !email && styles.disabledButton]} 
+        <TouchableOpacity
+          style={[styles.primaryButton, !email && styles.disabledButton]}
           onPress={handleSendCode}
           disabled={!email}
         >
@@ -99,7 +108,9 @@ const EmailVerificationScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity onPress={handleBackToLogIn}>
-          <Text style={styles.secondaryText}>Already have an account? Login</Text>
+          <Text style={styles.secondaryText}>
+            Already have an account? Login
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -111,7 +122,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: '#fff',
     padding: 30,
-    top: 50
+    paddingTop: 50,
   },
   header: {
     marginBottom: 30,
@@ -146,20 +157,6 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     textAlign: 'center',
     marginTop: 10,
-  },
-  testimonial: {
-    backgroundColor: '#F5F5F5',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 30,
-  },
-  testimonialText: {
-    fontStyle: 'italic',
-    color: '#555',
-    marginBottom: 5,
-  },
-  testimonialAuthor: {
-    color: '#777',
   },
   formContainer: {
     marginTop: 20,

@@ -6,15 +6,31 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from "react-native";
 import { completeRegistration } from "../api/axios";
-import { useNavigation } from '@react-navigation/native';
-import { Alert } from 'react-native';
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../utils/types";
 
+// Define the shape of registration payload and navigation params
+interface RegistrationPayload {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  username: string;
+  birthdate: string;
+  contactNumber: string;
+  referredBy: string;
+  password: string;
+  email: string;
+}
 
-const CompleteRegistrationScreen = ({ route }) => {
+type Props = NativeStackScreenProps<RootStackParamList, "CompleteRegistration">;
+
+const CompleteRegistrationScreen: React.FC<Props> = ({ route, navigation }) => {
   const { email } = route.params;
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<Omit<RegistrationPayload, "email">>({
     firstName: "",
     middleName: "",
     lastName: "",
@@ -22,51 +38,43 @@ const CompleteRegistrationScreen = ({ route }) => {
     birthdate: "",
     contactNumber: "",
     referredBy: "",
+    password: "",
   });
 
-
-  const navigation = useNavigation();
-  const handleInputChange = (name, value) => {
-    setFormData({
-      ...formData,
+  const handleInputChange = (name: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleSubmit = async () => {
-    try {
-      const requiredFields = [
-        "firstName",
-        "middleName",
-        "lastName",
-        "username",
-        "birthdate",
-        "contactNumber",
-        "referredBy",
-        "password",
-      ];
-
-      for (const field of requiredFields) {
-        if (!formData[field]) {
-          alert(
-            `Please enter your ${field
-              .replace(/([A-Z])/g, " $1")
-              .toLowerCase()}.`
-          );
-          return;
-        }
+    // Ensure all required fields are filled
+    for (const [key, value] of Object.entries(formData)) {
+      if (!value) {
+        Alert.alert(
+          "Missing Field",
+          `Please enter your ${key.replace(/([A-Z])/g, " $1").toLowerCase()}.`
+        );
+        return;
       }
-      const payload = { ...formData, email };
+    }
+
+    const payload: RegistrationPayload = { ...formData, email };
+
+    try {
       const response = await completeRegistration(payload);
       console.log("Registration successful:", response.data);
-      alert("Registration completed successfully!");
+      Alert.alert("Success", "Registration completed successfully!");
       navigation.navigate("Login");
-    } catch (err) {
-      // AxiosError: err.message is now "PasswordStrengthError: Password is too weak"
-      const frontendMsg = err.response?.data?.error || err.message;
-      Alert.alert("Registration failed", frontendMsg);
+    } catch (error: unknown) {
+      // Extract message from AxiosError or generic error
+      const errorMessage =
+        typeof error === "object" && error !== null && "message" in error
+          ? (error as Error).message
+          : String(error);
+      Alert.alert("Registration failed", errorMessage);
     }
-    
   };
 
   return (
@@ -189,14 +197,13 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 5,
     textAlign: "center",
-    top: 20,
+    marginTop: 20,
   },
   subtitle: {
     fontSize: 16,
     color: "#666",
     marginBottom: 20,
     textAlign: "center",
-    top: 13,
   },
   stepsIndicator: {
     flexDirection: "row",

@@ -10,13 +10,22 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
-import { loginUser } from "../api/axios";
+import { loginUser } from '../api/axios';
 
 import { useContext } from "react";
 import { AuthContext } from "../utils/authContext";
 
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import { RootStackParamList } from "../utils/types";
+
+type LoginScreenNavProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Login"
+>;
+
 const LoginScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<LoginScreenNavProp>();
 
   
   const { signIn } = useContext(AuthContext);
@@ -37,8 +46,12 @@ const LoginScreen = () => {
       Alert.alert("Success", "Login successful!");
       // navigation.navigate("Home");
       await signIn({ username, password });
-    } catch (err) {
-      Alert.alert("Login Failed", err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        Alert.alert("Login Failed", err.message);
+      } else {
+        Alert.alert("Login Failed", String(err));
+      }
     }
   };
 

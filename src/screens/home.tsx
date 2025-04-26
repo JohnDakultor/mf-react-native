@@ -18,12 +18,38 @@ import {
   Feather,
 } from "@expo/vector-icons";
 
-const HomeScreen = () => {
-  const [breakdownVisible, setBreakdownVisible] = useState(false);
+interface Balances {
+  timeDeposit: number;
+  interest: number;
+  primeWallet: number;
+}
 
-  const [activeTab, setActiveTab] = useState("Time Deposit");
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
+interface Referral {
+  active: boolean;
+  link: string;
+  requirement?: string;
+}
+
+interface Transaction {
+  label: string;
+  amount: number;
+}
+
+interface HomeData {
+  balances: Balances;
+  projectedInterest: number;
+  referral: Referral;
+  transactions: Transaction[];
+}
+
+type TabOption = "Time Deposit" | "Interest" | "Prime Wallet";
+
+const HomeScreen = () => {
+  const [breakdownVisible, setBreakdownVisible] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<TabOption>("Time Deposit");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [data, setData] = useState<HomeData>({
     balances: {
       timeDeposit: 0,
       interest: 0,
@@ -33,30 +59,24 @@ const HomeScreen = () => {
     referral: {
       active: false,
       link: "",
-    //   requirement: "",
     },
     transactions: [],
   });
 
+  // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("https://backend.com/api/home");
+        const res = await axios.get<HomeData>("https://backend.com/api/home");
         setData(res.data);
       } catch (error) {
         console.error("Failed to fetch home data:", error);
-        // Dummy fallback data
         setData({
-          balances: {
-            timeDeposit: 5000,
-            interest: 320.5,
-            primeWallet: 1250,
-          },
+          balances: { timeDeposit: 5000, interest: 320.5, primeWallet: 1250 },
           projectedInterest: 250,
           referral: {
             active: true,
             link: "https://yourapp.com/signup?ref=ABC123",
-            // requirement: "awdasfasfasdf",
           },
           transactions: [
             { label: "Deposit", amount: 5000 },
@@ -71,28 +91,22 @@ const HomeScreen = () => {
     fetchData();
   }, []);
 
+  // Copy referral link to clipboard
   const handleCopyReferralLink = () => {
-    if (referral.link) {
-      Clipboard.setStringAsync(referral.link);
+    if (data.referral.link) {
+      Clipboard.setStringAsync(data.referral.link);
       Alert.alert("Copied!", "Referral link copied to clipboard.");
     }
   };
 
-  const {
-    balances = {},
-    projectedInterest = 0,
-    referral = {},
-    transactions = [],
-  } = data;
-
-  const getBalance = () => {
+  const getBalance = (): number => {
     switch (activeTab) {
       case "Interest":
-        return balances.interest || 0;
+        return data.balances.interest;
       case "Prime Wallet":
-        return balances.primeWallet || 0;
+        return data.balances.primeWallet;
       default:
-        return balances.timeDeposit || 0;
+        return data.balances.timeDeposit;
     }
   };
 
@@ -119,7 +133,7 @@ const HomeScreen = () => {
     <ScrollView style={styles.container}>
       {/* Tabs */}
       <View style={styles.tabContainer}>
-        {["Time Deposit", "Interest", "Prime Wallet"].map((tab) => (
+        {(["Time Deposit", "Interest", "Prime Wallet"] as TabOption[] ).map((tab) => (
           <TouchableOpacity
             key={tab}
             style={[styles.tabButton, activeTab === tab && styles.activeTab]}
@@ -160,12 +174,12 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
         <Text style={styles.walletAmount}>
-          Php {projectedInterest.toFixed(2)}
+          Php {data.projectedInterest.toFixed(2)}
         </Text>
         <Text style={styles.walletNote}>
-          {balances.timeDeposit === 0
+          {data.balances.timeDeposit === 0
             ? "0% of Time Deposit"
-            : `${((projectedInterest / balances.timeDeposit) * 100).toFixed(
+            : `${((data.projectedInterest / data.balances.timeDeposit) * 100).toFixed(
                 2
               )}% of Time Deposit`}
         </Text>
@@ -183,7 +197,7 @@ const HomeScreen = () => {
           <View style={styles.referralInfo}>
             <View style={styles.dot} />
             <Text style={styles.referralNote}>
-              {referral.active ? referral.link : referral.requirement}
+              {data.referral.active ? data.referral.link : data.referral.requirement}
             </Text>
           </View>
         </TouchableOpacity>
@@ -192,12 +206,12 @@ const HomeScreen = () => {
       {/* Transactions */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Recent Transactions</Text>
-        {transactions.length === 0 ? (
+        {data.transactions.length === 0 ? (
           <Text style={styles.noTransactionText}>
             No transactions to display
           </Text>
         ) : (
-          transactions.map((tx, idx) => (
+          data.transactions.map((tx, idx) => (
             <View key={idx} style={styles.transactionItem}>
               <Text style={styles.txLabel}>{tx.label}</Text>
               <Text style={styles.txAmount}>Php {tx.amount.toFixed(2)}</Text>
@@ -216,14 +230,14 @@ const HomeScreen = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Interest Breakdown</Text>
             <Text style={styles.modalText}>
-              Your Time Deposit is: Php {balances.timeDeposit.toFixed(2)}
+              Your Time Deposit is: Php {data.balances.timeDeposit.toFixed(2)}
             </Text>
             <Text style={styles.modalText}>
               Projected Monthly Interest Rate: 5%
             </Text>
             <Text style={styles.modalText}>
-              Calculation: {balances.timeDeposit.toFixed(2)} × 0.05 = Php{" "}
-              {(balances.timeDeposit * 0.05).toFixed(2)}
+              Calculation: {data.balances.timeDeposit.toFixed(2)} × 0.05 = Php{" "}
+              {(data.balances.timeDeposit * 0.05).toFixed(2)}
             </Text>
             <TouchableOpacity
               style={styles.closeButton}
