@@ -8,9 +8,11 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { getCode } from '../api/axios';
+import { getCode, resendCode } from '../api/axios';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../utils/types';
+
+
 
 
 // Props type for this screen
@@ -49,9 +51,15 @@ const CodeVerificationScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
-  const handleResendCode = () => {
+  const handleResendCode = async () => {
     setResendTime(60);
-    // TODO: call API to resend code
+    try {
+     await resendCode(email);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Resend code failed:', message);
+      Alert.alert('Error', message);
+    }
   };
 
   return (

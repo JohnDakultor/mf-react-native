@@ -106,3 +106,14 @@ export const loginUser = async (
     throw new Error(msg);
   }
 };
+
+export const resendCode = async (email: string): Promise<any> => {
+  try {
+    const res = await Axios.post(`${IP}/auth/resend-code`, { email });
+    return res.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ error: string }>;
+    const msg = err.response?.data.error ?? err.message;
+    throw new Error(msg);
+  }
+};

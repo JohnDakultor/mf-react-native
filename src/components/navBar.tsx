@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import HomeScreen from '../screens/home';
 import DepositScreen from '../screens/deposit';
-import GenealogyTreeScreen from '../screens/genealogyTree';
+import GenealogyTree from '../screens/genealogyTree';
 import ProfileScreen from '../screens/profile';
 
 const Tab = createBottomTabNavigator();
@@ -56,7 +56,7 @@ const BottomTabNavigator = () => {
       >
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Deposit" component={DepositScreen} />
-        <Tab.Screen name="Genealogy" component={GenealogyTreeScreen} />
+        <Tab.Screen name="Genealogy" component={GenealogyTree} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
     );
