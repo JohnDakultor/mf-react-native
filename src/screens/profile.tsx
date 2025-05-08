@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,44 +6,79 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-} from 'react-native';
-import { AuthContext } from '../utils/authContext';
-import Icon from 'react-native-vector-icons/FontAwesome';
-
+  ActivityIndicator,
+} from "react-native";
+import { AuthContext } from "../utils/authContext";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { profile } from "../api/axios";
 
 const ProfileScreen = () => {
-  const { signOut } = useContext(AuthContext);
+  const { signOut, userId } = useContext(AuthContext);
+  const [userData, setUserData] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to log out?',
+      "Logout",
+      "Are you sure you want to log out?",
       [
         {
-          text: 'Cancel',
-          style: 'cancel',
+          text: "Cancel",
+          style: "cancel",
         },
         {
-          text: 'Logout',
+          text: "Logout",
           onPress: () => signOut(),
-          style: 'destructive',
+          style: "destructive",
         },
       ],
       { cancelable: true }
     );
   };
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      console.log("Fetched userId from context:", userId);
+      if (!userId) return; 
+      try {
+        const data = await profile(userId);
+        console.log("Profile data:", data);
+        setUserData({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email
+        });
+      } catch (error) {
+        console.error("Failed to load profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchProfile();
+  }, [userId]);
+  
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
         <Image
-          source={{
-            uri: 'https://i.pravatar.cc/150?img=12',
-          }}
+          source={{ uri: 'https://i.pravatar.cc/150?img=12' }}
           style={styles.avatar}
         />
-        <Text style={styles.name}>John Doe</Text>
-        <Text style={styles.email}>john.doe@example.com</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#0047AB" />
+        ) : (
+          <>
+            <Text style={styles.name}>
+              {userData?.first_name} {userData?.last_name}
+            </Text>
+            <Text style={styles.email}>{userData?.email}</Text>
+          </>
+        )}
       </View>
 
       <View style={styles.menu}>
@@ -59,7 +94,7 @@ const ProfileScreen = () => {
 
         <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
           <Icon name="sign-out" size={20} color="#d9534f" />
-          <Text style={[styles.menuText, { color: '#d9534f' }]}>Logout</Text>
+          <Text style={[styles.menuText, { color: "#d9534f" }]}>Logout</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -71,16 +106,16 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f9fc',
+    backgroundColor: "#f7f9fc",
     paddingHorizontal: 20,
     paddingTop: 40,
   },
   profileCard: {
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
@@ -95,36 +130,36 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#333',
+    fontWeight: "700",
+    color: "#333",
   },
   email: {
     fontSize: 14,
-    color: '#777',
+    color: "#777",
     marginTop: 4,
   },
   menu: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
     elevation: 3,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
     borderBottomWidth: 1,
   },
   menuText: {
     marginLeft: 12,
     fontSize: 16,
-    color: '#0047AB',
-    fontWeight: '500',
+    color: "#0047AB",
+    fontWeight: "500",
   },
 });

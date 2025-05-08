@@ -117,3 +117,14 @@ export const resendCode = async (email: string): Promise<any> => {
     throw new Error(msg);
   }
 };
+
+export const profile = async (userId: string): Promise<any> => {
+  try {
+    const res = await Axios.get(`${IP}/auth/profile/${userId}`);
+    return res.data;
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ error: string }>;
+    const msg = err.response?.data.error ?? err.message;
+    throw new Error(msg);
+  }
+};
